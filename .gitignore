@@ -5,8 +5,13 @@
 /writable/logs/
 /writable/session/
 /writable/uploads/
+/writable/*.sqlite
 .env
 !/env
+
+# Build artifacts
+/build/
+/builds
 
 # IDE
 .idea/

@@ -1,2 +1,19 @@
-./git/*
-./context/*
+# CodeIgniter 4
+/vendor/
+/writable/cache/
+/writable/debugbar/
+/writable/logs/
+/writable/session/
+/writable/uploads/
+.env
+!/env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

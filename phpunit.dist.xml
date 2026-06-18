@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+    bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+    backupGlobals="false"
+    beStrictAboutOutputDuringTests="true"
+    colors="true"
+    columns="max"
+    failOnRisky="true"
+    failOnWarning="true"
+    cacheDirectory="build/.phpunit.cache"
+>
+    <coverage pathCoverage="false" ignoreDeprecatedCodeUnits="true">
+        <report>
+            <clover outputFile="build/logs/clover.xml"/>
+            <html outputDirectory="build/logs/html"/>
+            <text outputFile="php://stdout" showUncoveredFiles="false"/>
+        </report>
+    </coverage>
+
+    <testsuites>
+        <testsuite name="contract">
+            <directory>./tests/Contract</directory>
+        </testsuite>
+        <testsuite name="unit">
+            <directory>./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="integration">
+            <directory>./tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory suffix=".php">./app</directory>
+        </include>
+        <exclude>
+            <directory suffix=".php">./app/Views</directory>
+            <file>./app/Config/Routes.php</file>
+        </exclude>
+    </source>
+
+    <php>
+        <env name="CI_ENVIRONMENT" value="testing"/>
+        <env name="app.baseURL" value="http://localhost:8080/"/>
+        <env name="CODEIGNITER_SCREAM_DEPRECATIONS" value="0"/>
+        <const name="HOMEPATH" value="./"/>
+        <const name="CONFIGPATH" value="./app/Config/"/>
+        <const name="PUBLICPATH" value="./public/"/>
+        <!-- Database para tests: SQLite en memoria -->
+        <env name="database.tests.hostname" value="localhost"/>
+        <env name="database.tests.database" value=":memory:"/>
+        <env name="database.tests.username" value=""/>
+        <env name="database.tests.password" value=""/>
+        <env name="database.tests.DBDriver" value="SQLite3"/>
+        <env name="database.tests.DBPrefix" value=""/>
+        <env name="database.tests.charset" value="utf8mb4"/>
+        <env name="database.tests.DBCollat" value="utf8mb4_unicode_ci"/>
+        <!-- Clave de cifrado para tests -->
+        <env name="LLM_TOKEN_ENCRYPTION_KEY" value="base64:mvilgBJdRT7NN2DAfv9yeWYLYtB4+kl0764Sk/2kEUo="/>
+        <env name="SESSION_TTL_SECONDS" value="300"/>
+    </php>
+</phpunit>

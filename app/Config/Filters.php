@@ -14,6 +14,9 @@ use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\ApiClientAuthFilter;
 use App\Filters\BearerSessionFilter;
+use App\Filters\RateLimitFilter;
+use App\Filters\TenantIsolationFilter;
+use App\Filters\TraceIdFilter;
 
 class Filters extends BaseFilters
 {
@@ -36,8 +39,11 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
-        'apiClientAuth' => ApiClientAuthFilter::class,
-        'bearerSession' => BearerSessionFilter::class,
+        'apiClientAuth'  => ApiClientAuthFilter::class,
+        'bearerSession'  => BearerSessionFilter::class,
+        'rateLimit'      => RateLimitFilter::class,
+        'tenantIsolation' => TenantIsolationFilter::class,
+        'traceId'        => TraceIdFilter::class,
     ];
 
     /**

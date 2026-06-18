@@ -13,4 +13,5 @@ $routes->group('v1', ['namespace' => 'App\Controllers\Api\V1'], function ($route
 
     $routes->post('auth/llm-session', 'Auth::createSession', ['filter' => 'apiClientAuth']);
     $routes->delete('auth/llm-session', 'Auth::revokeSession', ['filter' => 'bearerSession']);
+    $routes->post('conversations/analyze', 'Analysis::analyze', ['filter' => 'bearerSession']);
 });

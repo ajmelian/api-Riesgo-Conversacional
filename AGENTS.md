@@ -2,7 +2,38 @@
 
 ## Qué es este repo
 
-Paquete de diseño previo a la implementación para una **API de Análisis de Riesgo Conversacional**. No contiene código ejecutable — este repo alberga la especificación, el contrato, el esquema y fragmentos de referencia sobre los que se construirá el repo de implementación. Todo el contenido está bajo `context/`.
+Repositorio de implementación para una **API de Análisis de Riesgo Conversacional**. Contiene la especificación técnica, el contrato OpenAPI, el esquema de BD, fragmentos de referencia (bajo `context/`) y el código fuente PHP en desarrollo. Stack: PHP 8.4+, CodeIgniter 4.7.x, MySQL/MariaDB.
+
+## Flujo de trabajo con Git (GitFlow)
+
+El proyecto usa **GitFlow**. Ramas principales: `main` (producción) y `develop` (integración).
+
+### Ciclo de vida de una tarea
+
+```
+1. git pull origin develop          ← descargar últimos cambios del equipo
+2. git checkout -b feature/<tarea> develop  ← crear rama feature desde develop
+3. Leer .opencode/<fase>/<tarea>.md  ← verificar que la tarea está ⬜ pendiente
+4. Implementar siguiendo SDD+TDD    ← tests primero (RED), luego implementación (GREEN)
+5. php vendor/bin/phpunit           ← TODOS los tests deben pasar en verde
+6. git add <ficheros> && git commit -m "feat(<fase>): descripción"
+7. git checkout develop && git merge --no-ff feature/<tarea>
+8. git push origin develop
+```
+
+### Convenciones de ramas
+
+| Tipo | Formato | Ejemplo |
+|------|---------|---------|
+| Feature | `feature/<descripcion>` | `feature/fase-0-bootstrap` |
+| Release | `release/<version>` | `release/0.1.0` |
+| Hotfix | `hotfix/<descripcion>` | `hotfix/fix-rate-limit` |
+
+### Convenciones de commits
+
+Formato: `tipo(ámbito): descripción`
+
+Tipos: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`
 
 ## Documentos clave (orden de lectura)
 

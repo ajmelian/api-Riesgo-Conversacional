@@ -7,7 +7,7 @@ Flujo por cada endpoint: Test de contrato → Test de integración → Tests uni
 
 | # | Fase | Tareas | Estado |
 |---|------|--------|--------|
-| 0 | [Bootstrap del proyecto](fase-0-bootstrap/index.md) | 6 | ⬜ pendiente |
+| 0 | [Bootstrap del proyecto](fase-0-bootstrap/index.md) | 6 | ✅ completada |
 | 1 | [Contrato + Health](fase-1-contrato-health/index.md) | 4 | ⬜ pendiente |
 | 2A | [LlmTokenCipherService](fase-2a-cifrado/index.md) | 2 | ⬜ pendiente |
 | 2B | [ApiClientAuthenticatorService](fase-2b-auth-client/index.md) | 2 | ⬜ pendiente |

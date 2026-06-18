@@ -1,0 +1,2 @@
+# Ejecutar limpieza de sesiones LLM cada minuto.
+* * * * * /usr/bin/php /var/www/risk-api/current/spark riskapi:cleanup-llm-sessions >> /var/log/risk-api/cleanup.log 2>&1

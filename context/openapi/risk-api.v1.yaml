@@ -1,0 +1,488 @@
+openapi: 3.1.2
+info:
+  title: Conversational Risk Analysis API
+  summary: API para análisis de riesgo conversacional mediante proveedores LLM externos.
+  description: >
+    API multi-cliente desarrollada en PHP 8.5.x con CodeIgniter 4.7.x y CodeIgniter Shield 1.3.x.
+    Permite analizar conversaciones para detectar indicios de acoso, vejaciones, amenazas,
+    riesgo contra menores, riesgo de autolesión y otros patrones de violencia conversacional.
+    La API no ejecuta denuncias automáticas ni toma decisiones sancionadoras plenas.
+  version: 0.2.0
+  contact:
+    name: Aythami Melián Perdomo
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.example.com
+    description: Producción
+  - url: https://sandbox-api.example.com
+    description: Sandbox
+tags:
+  - name: Auth
+    description: Gestión de sesiones efímeras con proveedor LLM.
+  - name: Analysis
+    description: Análisis de conversaciones.
+  - name: Health
+    description: Estado operativo de la API.
+paths:
+  /v1/auth/llm-session:
+    post:
+      tags:
+        - Auth
+      operationId: createLlmSession
+      summary: Crear una sesión efímera con proveedor LLM
+      description: >
+        Valida las credenciales del cliente integrador y el token del proveedor LLM.
+        Si son válidos, crea una sesión efímera de 300 segundos por inactividad.
+        El token LLM se almacena temporalmente cifrado en MySQL/MariaDB y nunca en claro.
+      security:
+        - clientId: []
+          clientSecret: []
+      parameters:
+        - $ref: '#/components/parameters/LlmProviderHeader'
+        - $ref: '#/components/parameters/LlmTokenHeader'
+      responses:
+        '201':
+          description: Sesión LLM creada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmSessionResponse'
+              examples:
+                openAiSession:
+                  value:
+                    sessionToken: riskapi_sess_4e7b1c9a0f2d
+                    tokenType: Bearer
+                    expiresIn: 300
+                    llmProvider: openai
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      tags:
+        - Auth
+      operationId: revokeLlmSession
+      summary: Revocar sesión LLM activa
+      description: Revoca la sesión efímera asociada al token Bearer recibido.
+      security:
+        - bearerSession: []
+      responses:
+        '204':
+          description: Sesión revocada correctamente.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/conversations/analyze:
+    post:
+      tags:
+        - Analysis
+      operationId: analyzeConversation
+      summary: Analizar conversación
+      description: >
+        Analiza una conversación para detectar indicios de acoso, hostigamiento,
+        vejaciones, amenazas, riesgo emocional, autolesión, violencia digital o riesgo
+        específico sobre menores. Devuelve clasificación técnica de riesgo, evidencias
+        mínimas y recomendación operativa.
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationAnalysisRequest'
+            examples:
+              basicConversation:
+                value:
+                  conversationId: conv_123
+                  context:
+                    platformType: forum
+                    language: es
+                    containsMinors: true
+                  participants:
+                    - participantId: usr_a
+                      role: affected_candidate
+                      ip: 203.0.113.10
+                    - participantId: usr_b
+                      role: risk_actor_candidate
+                      ip: 203.0.113.20
+                  messages:
+                    - messageId: msg_001
+                      participantId: usr_a
+                      text: No quiero seguir hablando contigo.
+                      createdAt: '2026-06-18T10:30:00Z'
+                    - messageId: msg_002
+                      participantId: usr_b
+                      text: Te vas a arrepentir si cuentas algo.
+                      createdAt: '2026-06-18T10:30:10Z'
+      responses:
+        '200':
+          description: Análisis completado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationAnalysisResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/health:
+    get:
+      tags:
+        - Health
+      operationId: getHealthStatus
+      summary: Consultar estado de la API
+      security: []
+      responses:
+        '200':
+          description: API operativa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  securitySchemes:
+    clientId:
+      type: apiKey
+      in: header
+      name: X-Client-Id
+      description: Identificador público del cliente integrador.
+    clientSecret:
+      type: apiKey
+      in: header
+      name: X-Client-Secret
+      description: Secreto privado del cliente integrador.
+    bearerSession:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: Token opaco de sesión efímera emitido por la API.
+  parameters:
+    LlmProviderHeader:
+      name: X-LLM-Provider
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/LlmProvider'
+    LlmTokenHeader:
+      name: X-LLM-Token
+      in: header
+      required: true
+      description: Token del proveedor LLM propiedad del cliente integrador. No debe registrarse en logs.
+      schema:
+        type: string
+        minLength: 20
+        maxLength: 4096
+        writeOnly: true
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    LlmProvider:
+      type: string
+      enum:
+        - openai
+        - anthropic
+    LlmSessionResponse:
+      type: object
+      required:
+        - sessionToken
+        - tokenType
+        - expiresIn
+        - llmProvider
+      properties:
+        sessionToken:
+          type: string
+          example: riskapi_sess_4e7b1c9a0f2d
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          minimum: 1
+          maximum: 300
+          example: 300
+        llmProvider:
+          $ref: '#/components/schemas/LlmProvider'
+    ConversationAnalysisRequest:
+      type: object
+      required:
+        - conversationId
+        - context
+        - participants
+        - messages
+      properties:
+        conversationId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        context:
+          $ref: '#/components/schemas/ConversationContext'
+        participants:
+          type: array
+          minItems: 2
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/Participant'
+        messages:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+    ConversationContext:
+      type: object
+      required:
+        - platformType
+        - language
+        - containsMinors
+      properties:
+        platformType:
+          type: string
+          enum: [chat, forum, elearning, gaming, social, other]
+        language:
+          type: string
+          pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+          example: es
+        containsMinors:
+          type: boolean
+    Participant:
+      type: object
+      required:
+        - participantId
+      properties:
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        role:
+          type: string
+          enum: [affected_candidate, risk_actor_candidate, unknown]
+          default: unknown
+        ip:
+          type: string
+          oneOf:
+            - type: string
+              format: ipv4
+            - type: string
+              format: ipv6
+    ConversationMessage:
+      type: object
+      required:
+        - messageId
+        - participantId
+        - text
+        - createdAt
+      properties:
+        messageId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        text:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        createdAt:
+          type: string
+          format: date-time
+    ConversationAnalysisResponse:
+      type: object
+      required:
+        - conversationId
+        - analysisId
+        - riskLevel
+        - riskLabel
+        - sentiment
+        - confidence
+        - requiresHumanReview
+        - recommendedAction
+        - automaticExternalNotification
+        - evidence
+        - audit
+      properties:
+        conversationId:
+          type: string
+        analysisId:
+          type: string
+        riskLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+        riskLabel:
+          type: string
+          enum: [normalConversation, mildHostility, harassmentWarning, highRiskHarassment, criticalRisk]
+        sentiment:
+          type: string
+          enum: [neutral, positive, tense, hostile, critical]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        affectedParticipantId:
+          type:
+            - string
+            - 'null'
+        riskActorParticipantId:
+          type:
+            - string
+            - 'null'
+        requiresHumanReview:
+          type: boolean
+        recommendedAction:
+          type: string
+          enum: [noAction, softWarning, formalWarning, strikeAndModeratorReview, temporaryLockAndModeratorReview, urgentHumanReview]
+        automaticExternalNotification:
+          type: boolean
+          const: false
+        legalEscalationCandidate:
+          type: boolean
+          default: false
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        audit:
+          $ref: '#/components/schemas/AnalysisAudit'
+    Evidence:
+      type: object
+      required:
+        - messageId
+        - category
+        - excerpt
+        - reason
+      properties:
+        messageId:
+          type: string
+        category:
+          type: string
+          enum: [insult, harassment, threat, humiliation, discrimination, grooming, selfHarm, violence, coercion, other]
+        excerpt:
+          type: string
+          maxLength: 1000
+        reason:
+          type: string
+          maxLength: 2000
+    AnalysisAudit:
+      type: object
+      required:
+        - llmProvider
+        - analysisVersion
+        - promptVersion
+      properties:
+        llmProvider:
+          $ref: '#/components/schemas/LlmProvider'
+        model:
+          type:
+            - string
+            - 'null'
+        analysisVersion:
+          type: string
+        promptVersion:
+          type: string
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        timestamp:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - traceId
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        traceId:
+          type: string
+    ValidationErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - traceId
+        - violations
+      properties:
+        error:
+          type: string
+          const: validation_error
+        message:
+          type: string
+        traceId:
+          type: string
+        violations:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+  responses:
+    BadRequest:
+      description: Solicitud mal formada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Credenciales inválidas, ausentes o sesión expirada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Error de validación del payload.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+    PayloadTooLarge:
+      description: Payload demasiado grande.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Límite de peticiones superado.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+security:
+  - bearerSession: []

@@ -1,0 +1,8 @@
+.env
+writable/cache/*
+writable/logs/*
+writable/session/*
+writable/uploads/*
+vendor/
+.phpunit.result.cache
+coverage/
